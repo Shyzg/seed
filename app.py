@@ -461,7 +461,7 @@ class Seed:
                     self.print_timestamp(
                         f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
                         f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                        f"{Fore.MAGENTA + Style.BRIGHT}[ Claimed Streak Reward ]{Style.RESET_ALL}"
+                        f"{Fore.GREEN + Style.BRIGHT}[ Claimed Streak Reward ]{Style.RESET_ALL}"
                     )
         except (JSONDecodeError, RequestException) as e:
             if e.response.status_code == 404:
@@ -611,12 +611,12 @@ class Seed:
             response.raise_for_status()
             is_leader_bird = response.json()['data']
             if is_leader_bird['status'] == 'hunting':
-                if datetime.now().astimezone() >= datetime.fromisoformat(is_leader_bird['hunt_end_at'].replace("Z", "+00:00")).astimezone():
+                if datetime.now().astimezone() >= datetime.fromisoformat(is_leader_bird['hunt_end_at'].replace('Z', '+00:00')).astimezone():
                     return self.complete_bird_hunt(query=query, name=name, bird_id=is_leader_bird['id'], task_level=is_leader_bird['task_level'])
                 return self.print_timestamp(
                     f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
                     f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                    f"{Fore.YELLOW + Style.BRIGHT}[ Bird Can Be Complete Hunt At {datetime.fromisoformat(is_leader_bird['hunt_end_at'].replace("Z", "+00:00")).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}"
+                    f"{Fore.YELLOW + Style.BRIGHT}[ Bird Can Be Complete Hunt At {datetime.fromisoformat(is_leader_bird['hunt_end_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}"
                 )
             elif is_leader_bird['status'] == 'in-inventory':
                 if is_leader_bird['happiness_level'] < 10000 or is_leader_bird['energy_level'] < is_leader_bird['energy_max']:
@@ -767,13 +767,13 @@ class Seed:
                     f"{Fore.GREEN + Style.BRIGHT}[ Bird Hunt Started ]{Style.RESET_ALL}"
                 )
 
-                if datetime.now().astimezone() >= datetime.fromisoformat(start_bird_hunt['hunt_end_at'].replace("Z", "+00:00")).astimezone():
+                if datetime.now().astimezone() >= datetime.fromisoformat(start_bird_hunt['hunt_end_at'].replace('Z', '+00:00')).astimezone():
                     return self.complete_bird_hunt(query=query, name=name, bird_id=start_bird_hunt['id'], task_level=start_bird_hunt['task_level'])
 
                 return self.print_timestamp(
                     f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
                     f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                    f"{Fore.YELLOW + Style.BRIGHT}[ Bird Can Be Complete Hunt At {datetime.fromisoformat(start_bird_hunt['hunt_end_at'].replace("Z", "+00:00")).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}"
+                    f"{Fore.YELLOW + Style.BRIGHT}[ Bird Can Be Complete Hunt At {datetime.fromisoformat(start_bird_hunt['hunt_end_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}"
                 )
         except (JSONDecodeError, RequestException) as e:
             if e.response.status_code == 400:
