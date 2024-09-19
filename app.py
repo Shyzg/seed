@@ -2,15 +2,15 @@ from colorama import *
 from datetime import datetime, timedelta
 from fake_useragent import FakeUserAgent
 from faker import Faker
-from pyrogram import Client
-from pyrogram.errors import (
-    FloodWait,
-    Unauthorized,
-    AuthKeyUnregistered,
-    UserDeactivated
+from telethon.errors import (
+    AuthKeyUnregisteredError,
+    UserDeactivatedError,
+    UserDeactivatedBanError,
+    UnauthorizedError
 )
-from pyrogram.raw.functions.messages import RequestAppWebView
-from pyrogram.raw.types import InputBotAppShortName
+from telethon.functions import messages
+from telethon.sync import TelegramClient
+from telethon.types import InputBotAppShortName, AppWebViewResultUrl
 from requests import (
     JSONDecodeError,
     RequestException,
@@ -54,59 +54,34 @@ class Seed:
             flush=True
         )
 
-    async def generate_queries(self, sessions: str):
-        accounts = []
-        for session in sessions:
-            try:
-                client = Client(
-                    name=f'sessions/{session}',
-                    api_id=self.api_id,
-                    api_hash=self.api_hash
-                )
-
-                if not client.is_connected:
-                    try:
-                        await client.connect()
-                    except (Unauthorized, UserDeactivated, AuthKeyUnregistered) as e:
-                        self.print_timestamp(
-                            f"{Fore.CYAN + Style.BRIGHT}[ {session} ]{Style.RESET_ALL}"
-                            f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                            f"{Fore.RED + Style.BRIGHT}[ {str(e)} ]{Style.RESET_ALL}"
-                        )
-                        continue
-
+    async def generate_query(self, session: str):
+        try:
+            async with TelegramClient(session=f'sessions/{session}', api_id=self.api_id, api_hash=self.api_hash) as client:
                 try:
-                    peer = await client.resolve_peer('seed_coin_bot')
-                except FloodWait as e:
-                    self.print_timestamp(
-                        f"{Fore.CYAN + Style.BRIGHT}[ {session} ]{Style.RESET_ALL}"
-                        f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                        f"{Fore.RED + Style.BRIGHT}[ FloodWait {str(e.value)} Seconds While Generating Query With Pyrogram ]{Style.RESET_ALL}"
-                    )
-                    continue
-
-                web_view = await client.invoke(RequestAppWebView(
-                    peer=peer,
-                    app=InputBotAppShortName(bot_id=peer, short_name='app'),
+                    await client.connect()
+                    me = await client.get_me()
+                    username = me.username if me.username else self.faker.user_name()
+                except (AuthKeyUnregisteredError, UnauthorizedError, UserDeactivatedBanError, UserDeactivatedError) as e:
+                    raise e
+                
+                webapp_response: AppWebViewResultUrl = await client(messages.RequestAppWebViewRequest(
+                    peer='seed_coin_bot',
+                    app=InputBotAppShortName(bot_id=await client.get_input_entity('seed_coin_bot'), short_name='app'),
                     platform='ios',
                     write_allowed=True,
                     start_param='6094625904'
                 ))
+                query = unquote(string=webapp_response.url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0])
+                await client.disconnect()
+                return (query, username)
+        except Exception as e:
+            self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {session} Unexpected Error While Generating Query With Pyrogram: {str(e)} ]{Style.RESET_ALL}")
+            return None
 
-                auth_url = web_view.url
-                query = unquote(string=auth_url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0])
-                parsed_query = parse_qs(query)
-                user_data_json = parsed_query['user'][0]
-                user_data = json.loads(user_data_json)
-                username = user_data.get('username', self.faker.user_name())
-                accounts.append((query, username))
-
-                if client.is_connected:
-                    await client.disconnect()
-            except Exception as e:
-                self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {session} Unexpected Error While Generating Query With Pyrogram: {str(e)} ]{Style.RESET_ALL}")
-                continue
-        return accounts
+    async def generate_queries(self, sessions):
+        tasks = [self.generate_query(session) for session in sessions]
+        results = await asyncio.gather(*tasks)
+        return [result for result in results if result is not None]
 
     def profile(self, query: str):
         url = 'https://elb.seeddao.org/api/v1/profile'
@@ -870,7 +845,7 @@ class Seed:
             response.raise_for_status()
             tasks = response.json()
             sleep(5)
-            self.notification_tasks(query=query, name=name, data=tasks['data'], task_name=task_name)
+            return self.notification_tasks(query=query, name=name, data=tasks['data'], task_name=task_name)
         except (JSONDecodeError, RequestException) as e:
             return self.print_timestamp(
                 f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
@@ -1047,8 +1022,8 @@ class Seed:
                 sessions = [file.replace('.session', '') for file in os.listdir('sessions/') if file.endswith('.session')]
                 if not sessions:
                     return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ No Session Files Found In The Folder! Please Make Sure There Are '*.session' Files In The Folder. ]{Style.RESET_ALL}")
-                accounts = await self.generate_queries(sessions=sessions)
-                total_balance = 0.0
+                accounts = await self.generate_queries(sessions)
+                total_balance = 0
 
                 self.print_timestamp(f"{Fore.WHITE + Style.BRIGHT}[ Home ]{Style.RESET_ALL}")
                 for (query, name) in accounts:
@@ -1065,6 +1040,7 @@ class Seed:
                             f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
                             f"{Fore.MAGENTA + Style.BRIGHT}[ You Did Not Have Egg ]{Style.RESET_ALL}"
                         )
+                        continue
                     for egg in me_egg['items']:
                         self.complete_egg_hatch(query=query, name=name, egg_id=egg['id'])
 
@@ -1102,14 +1078,14 @@ class Seed:
 
                 for (query, name) in accounts:
                     balance_profile = self.balance_profile(query=query, name=name)
-                    total_balance += round(float(balance_profile / 1000000000), 1) if balance_profile else 0.0
+                    total_balance += int(float(balance_profile / 1000000000)) if balance_profile else 0
                 
                 self.print_timestamp(
                     f"{Fore.CYAN + Style.BRIGHT}[ Total Account {len(accounts)} ]{Style.RESET_ALL}"
                     f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
                     f"{Fore.GREEN + Style.BRIGHT}[ Total Balance {total_balance} ]{Style.RESET_ALL}"
                 )
-                self.print_timestamp(f"{Fore.CYAN + Style.BRIGHT}[ Restarting At {(datetime.now().astimezone() + timedelta(seconds=1800)).strftime('%X %Z')} ]{Style.RESET_ALL}")
+                self.print_timestamp(f"{Fore.CYAN + Style.BRIGHT}[ Restarting At {(datetime.now().astimezone() + timedelta(seconds=1800)).strftime('%x %X %Z')} ]{Style.RESET_ALL}")
 
                 await asyncio.sleep(1800)
                 self.clear_terminal()
