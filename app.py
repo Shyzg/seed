@@ -17,7 +17,7 @@ from requests import (
     Session
 )
 from time import sleep
-from urllib.parse import parse_qs, unquote
+from urllib.parse import unquote
 import asyncio
 import json
 import os
@@ -42,6 +42,7 @@ class Seed:
         }
         self.api_id = 26326768
         self.api_hash = 'ff06b969a60cdb700f6e965de8e34e68'
+        self.sell_price = 100
 
     def clear_terminal(self):
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -1018,6 +1019,40 @@ class Seed:
                 f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Leave Guild: {str(e)} ]{Style.RESET_ALL}"
             )
 
+    def add_market_item(self, query: str, name: str, worm_id: str):
+        url = 'https://elb.seeddao.org/api/v1/market-item/add'
+        data = json.dumps({'worm_id':worm_id,'price':int(self.sell_price * 1000000000)})
+        headers = {
+            **self.headers,
+            'Content-Length': str(len(data)),
+            'Content-Type': 'application/json',
+            'telegram-data': query
+        }
+        try:
+            response = self.session.post(url=url, headers=headers, data=data)
+            response.raise_for_status()
+            add_market_item = response.json()['data']
+            if add_market_item['status'] == 'on-sale':
+                return self.print_timestamp(
+                    f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
+                    f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
+                    f"{Fore.GREEN + Style.BRIGHT}[ Successfully Add Worm {add_market_item['worm_type']} To Market ]{Style.RESET_ALL}"
+                    f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
+                    f"{Fore.BLUE + Style.BRIGHT}[ With Price {int(add_market_item['price_gross'] / 1000000000)} ]{Style.RESET_ALL}"
+                )
+        except (JSONDecodeError, RequestException) as e:
+            return self.print_timestamp(
+                f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
+                f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
+                f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Add Market Item: {str(e)} ]{Style.RESET_ALL}"
+            )
+        except Exception as e:
+            return self.print_timestamp(
+                f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
+                f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
+                f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Add Market Item: {str(e)} ]{Style.RESET_ALL}"
+            )
+
     async def main(self):
         while True:
             try:
@@ -1053,6 +1088,13 @@ class Seed:
                                 f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
                                 f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}"
                             )
+
+                    me_worms = self.me_worms(query=query, name=name)
+                    if me_worms is None: continue
+                    for sell in me_worms['items']:
+                        if sell['type'] == 'legendary' and not sell['on_market']:
+                            self.add_market_item(query=query, name=name, worm_id=sell['id'])
+
                     me_egg = self.me_egg(query=query, name=name)
                     if me_egg is None: continue
                     if not me_egg['items']:
