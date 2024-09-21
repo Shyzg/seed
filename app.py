@@ -465,7 +465,7 @@ class Seed:
                     for data in me_all_worms:
                         if data['status'] == 'successful':
                             await self.bird_feed(query=query, bird_id=bird_id, worm_ids=data['id'])
-                return self.start_bird_hunt(query=query, bird_id=bird_id, task_level=task_level)
+                return await self.start_bird_hunt(query=query, bird_id=bird_id, task_level=task_level)
         except (JSONDecodeError, RequestException) as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Me All Worms: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
