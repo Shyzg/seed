@@ -1,3 +1,4 @@
+import random
 from colorama import *
 from datetime import datetime, timedelta
 from fake_useragent import FakeUserAgent
@@ -197,7 +198,6 @@ class Seed:
             with Session().get(url=url, headers=headers) as response:
                 response.raise_for_status()
                 me_worms = response.json()['data']
-                self.print_timestamp(f"{Fore.BLUE + Style.BRIGHT}[ You Have {me_worms['total']} Worms ]{Style.RESET_ALL}")
                 if me_worms['items']:
                     for data in me_worms['items']:
                         if data['status'] == 'successful' and data['type'] == 'legendary' and not data['on_market']:
@@ -241,7 +241,6 @@ class Seed:
             with Session().get(url=url, headers=headers) as response:
                 response.raise_for_status()
                 me_egg = response.json()['data']
-                self.print_timestamp(f"{Fore.BLUE + Style.BRIGHT}[ You Have {me_egg['total']} Egg ]{Style.RESET_ALL}")
                 if me_egg['items']:
                     for egg in me_egg['items']:
                         await self.complete_egg_hatch(query=query, egg_id=egg['id'])
@@ -271,22 +270,6 @@ class Seed:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Complete Egg Hatch: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Complete Egg Hatch: {str(e)} ]{Style.RESET_ALL}")
-
-    async def me_bird(self, query: str):
-        url = 'https://elb.seeddao.org/api/v1/bird/me?page=1'
-        headers = {
-            **self.headers,
-            'telegram-data': query
-        }
-        try:
-            with Session().get(url=url, headers=headers) as response:
-                response.raise_for_status()
-                me_bird = response.json()['data']
-                return self.print_timestamp(f"{Fore.BLUE + Style.BRIGHT}[ You Have {me_bird['total']} Bird ]{Style.RESET_ALL}")
-        except (JSONDecodeError, RequestException) as e:
-            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Me Bird: {str(e)} ]{Style.RESET_ALL}")
-        except Exception as e:
-            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Fetching Me Bird: {str(e)} ]{Style.RESET_ALL}")
 
     async def login_bonuses(self, query: str):
         url = 'https://elb.seeddao.org/api/v1/login-bonuses'
@@ -591,42 +574,37 @@ class Seed:
             with Session().post(url=url, headers=headers) as response:
                 response.raise_for_status()
                 tasks = response.json()
+                await asyncio.sleep(random.randint(3, 5))
                 return await self.notification_tasks(query=query, data=tasks['data'], task_name=task_name)
         except (JSONDecodeError, RequestException) as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Start Task {task_name}: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Start Task {task_name}: {str(e)} ]{Style.RESET_ALL}")
 
-    async def notification_tasks(self, query: str, data: str, task_name: str, max_attempts: int = 3):
+    async def notification_tasks(self, query: str, data: str, task_name: str):
         url = f'https://elb.seeddao.org/api/v1/tasks/notification/{data}'
         headers = {
             **self.headers,
             'telegram-data': query
         }
-        attempts = 0
-        while attempts < max_attempts:
-            try:
-                with Session().get(url=url, headers=headers) as response:
-                    response.raise_for_status()
-                    notification_tasks = response.json()
-                    if 'data' in notification_tasks['data']:
-                        if notification_tasks['data']['data']['completed']:
-                            return self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ You Have Got {notification_tasks['data']['data']['reward_amount'] / 1000000000} From Completing {task_name} ]{Style.RESET_ALL}")
-                    elif 'error' in notification_tasks['data']:
-                        if notification_tasks['data']['error'] == 'incomplete task':
-                            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {task_name} Incomeplete ]{Style.RESET_ALL}")
-            except (JSONDecodeError, RequestException) as e:
-                attempts += 1
-                if attempts >= max_attempts:
-                    if e.response.status_code == 404:
-                        error_notification_tasks = e.response.json()
-                        if error_notification_tasks['message'] == 'notification not found or expired':
-                            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {task_name} Not Found Or Expired ]{Style.RESET_ALL}")
-                    return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Notification Task {task_name}: {str(e)} ]{Style.RESET_ALL}")
-                else:
-                    await asyncio.sleep(2 ** attempts)
-            except Exception as e:
-                return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Notification Task {task_name}: {str(e)} ]{Style.RESET_ALL}")
+        try:
+            with Session().get(url=url, headers=headers) as response:
+                response.raise_for_status()
+                notification_tasks = response.json()
+                if 'data' in notification_tasks['data']:
+                    if notification_tasks['data']['data']['completed']:
+                        return self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ You Have Got {notification_tasks['data']['data']['reward_amount'] / 1000000000} From Completing {task_name} ]{Style.RESET_ALL}")
+                elif 'error' in notification_tasks['data']:
+                    if notification_tasks['data']['error'] == 'incomplete task':
+                        return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {task_name} Incomeplete ]{Style.RESET_ALL}")
+        except (JSONDecodeError, RequestException) as e:
+            if e.response.status_code == 404:
+                error_notification_tasks = e.response.json()
+                if error_notification_tasks['message'] == 'notification not found or expired':
+                    return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {task_name} Not Found Or Expired ]{Style.RESET_ALL}")
+            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Notification Task {task_name}: {str(e)} ]{Style.RESET_ALL}")
+        except Exception as e:
+            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Notification Task {task_name}: {str(e)} ]{Style.RESET_ALL}")
 
     async def detail_member_guild(self, query: str):
         url = 'https://elb.seeddao.org/api/v1/guild/member/detail'
@@ -679,6 +657,23 @@ class Seed:
         except (Exception, JSONDecodeError, RequestException) as e:
             return False
 
+    async def perform_is_leader(self, query, name):
+        self.print_timestamp(
+            f"{Fore.WHITE + Style.BRIGHT}[ Home/Is Leader ]{Style.RESET_ALL}"
+            f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
+            f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
+        )
+        await self.is_leader_bird(query=query)
+
+    async def perform_boost(self, query, name):
+        self.print_timestamp(
+            f"{Fore.WHITE + Style.BRIGHT}[ Boost ]{Style.RESET_ALL}"
+            f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
+            f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
+        )
+        await self.upgrade_mining_seed(query=query)
+        await self.upgrade_storage_size(query=query)
+
     async def main(self):
         while True:
             try:
@@ -698,6 +693,8 @@ class Seed:
                     await self.profile(query=query)
                     await self.profile2(query=query)
                     await self.claim_seed(query=query)
+                    await self.me_worms(query=query)
+                    await self.me_egg(query=query)
                     worms = await self.worms(query=query)
                     if worms is None: continue
                     if datetime.now().astimezone() >= datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone():
@@ -709,23 +706,8 @@ class Seed:
                             restart_times.append(datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().timestamp())
                             self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
 
-                for (query, name) in accounts:
-                    self.print_timestamp(
-                        f"{Fore.WHITE + Style.BRIGHT}[ Home/Inventory ]{Style.RESET_ALL}"
-                        f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                        f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
-                    )
-                    await self.me_worms(query=query)
-                    await self.me_egg(query=query)
-                    await self.me_bird(query=query)
-
-                for (query, name) in accounts:
-                    self.print_timestamp(
-                        f"{Fore.WHITE + Style.BRIGHT}[ Home/Is Leader ]{Style.RESET_ALL}"
-                        f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                        f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
-                    )
-                    await self.is_leader_bird(query=query)
+                tasks = [self.perform_is_leader(query, name) for (query, name) in accounts]
+                await asyncio.gather(*tasks)
 
                 for (query, name) in accounts:
                     self.print_timestamp(
@@ -737,24 +719,11 @@ class Seed:
                     await self.get_streak_reward(query=query)
                     await self.progresses_tasks(query=query)
 
-                for (query, name) in accounts:
-                    self.print_timestamp(
-                        f"{Fore.WHITE + Style.BRIGHT}[ Boost ]{Style.RESET_ALL}"
-                        f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                        f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
-                    )
-                    await self.upgrade_mining_seed(query=query)
-                    await self.upgrade_storage_size(query=query)
+                tasks = [self.perform_boost(query, name) for (query, name) in accounts]
+                await asyncio.gather(*tasks)
 
                 for (query, name) in accounts:
-                    self.print_timestamp(
-                        f"{Fore.WHITE + Style.BRIGHT}[ Guild ]{Style.RESET_ALL}"
-                        f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                        f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
-                    )
                     await self.detail_member_guild(query=query)
-
-                for (query, name) in accounts:
                     balance_profile = await self.balance_profile(query=query)
                     total_balance += float(balance_profile / 1000000000) if balance_profile else 0.0
 
