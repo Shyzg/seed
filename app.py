@@ -16,7 +16,6 @@ from requests import (
     RequestException,
     Session
 )
-from time import sleep
 from urllib.parse import unquote
 import asyncio
 import json
@@ -25,7 +24,6 @@ import sys
 
 class Seed:
     def __init__(self) -> None:
-        self.session = Session()
         self.faker = Faker()
         self.headers = {
             'Accept': '*/*',
