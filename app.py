@@ -434,7 +434,18 @@ class Seed:
         try:
             response = self.session.get(url=url, headers=headers)
             response.raise_for_status()
-            return response.json()['data']
+            is_leader_bird = response.json()['data']
+            if is_leader_bird['status'] == 'hunting':
+                if datetime.now().astimezone() >= datetime.fromisoformat(is_leader_bird['hunt_end_at'].replace('Z', '+00:00')).astimezone():
+                    self.complete_bird_hunt(query=query, bird_id=is_leader_bird['id'], task_level=is_leader_bird['task_level'])
+                else:
+                    self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Bird Hunt Can Be Complete At {datetime.fromisoformat(is_leader_bird['hunt_end_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
+            elif is_leader_bird['status'] == 'in-inventory':
+                if is_leader_bird['happiness_level'] < 10000 or is_leader_bird['energy_level'] < is_leader_bird['energy_max']:
+                    self.bird_happiness(query=query, bird_id=is_leader_bird['id'])
+                    self.me_all_worms(query=query, bird_id=is_leader_bird['id'], task_level=is_leader_bird['task_level'])
+                elif is_leader_bird['happiness_level'] >= 10000 and is_leader_bird['energy_level'] >= is_leader_bird['energy_max']:
+                    self.start_bird_hunt(query=query, bird_id=is_leader_bird['id'], task_level=is_leader_bird['task_level'])
         except (JSONDecodeError, RequestException) as e:
             self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Is Leader Bird: {str(e)} ]{Style.RESET_ALL}")
             return None
@@ -452,11 +463,11 @@ class Seed:
             response = self.session.get(url=url, headers=headers)
             response.raise_for_status()
             me_all_worms = response.json()['data']
-            if not me_all_worms: return
-            for data in me_all_worms:
-                if data['status'] == 'successful':
-                    self.bird_feed(query=query, bird_id=bird_id, worm_ids=data['id'])
-            return self.start_bird_hunt(query=query, bird_id=bird_id, task_level=task_level)
+            if me_all_worms:
+                for data in me_all_worms:
+                    if data['status'] == 'successful':
+                        self.bird_feed(query=query, bird_id=bird_id, worm_ids=data['id'])
+                return self.start_bird_hunt(query=query, bird_id=bird_id, task_level=task_level)
         except (JSONDecodeError, RequestException) as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Me All Worms: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -741,20 +752,7 @@ class Seed:
                         f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
                         f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
                     )
-                    is_leader_bird = self.is_leader_bird(query=query)
-                    if is_leader_bird is None: continue
-                    if is_leader_bird['status'] == 'hunting':
-                        if datetime.now().astimezone() >= datetime.fromisoformat(is_leader_bird['hunt_end_at'].replace('Z', '+00:00')).astimezone():
-                            self.complete_bird_hunt(query=query, bird_id=is_leader_bird['id'], task_level=is_leader_bird['task_level'])
-                        else:
-                            restart_times.append(datetime.fromisoformat(is_leader_bird['hunt_end_at'].replace('Z', '+00:00')).astimezone().timestamp())
-                            self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Bird Hunt Can Be Complete At {datetime.fromisoformat(is_leader_bird['hunt_end_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
-                    elif is_leader_bird['status'] == 'in-inventory':
-                        if is_leader_bird['happiness_level'] < 10000 or is_leader_bird['energy_level'] < is_leader_bird['energy_max']:
-                            self.bird_happiness(query=query, bird_id=is_leader_bird['id'])
-                            self.me_all_worms(query=query, bird_id=is_leader_bird['id'], task_level=is_leader_bird['task_level'])
-                        elif is_leader_bird['happiness_level'] >= 10000 and is_leader_bird['energy_level'] >= is_leader_bird['energy_max']:
-                            self.start_bird_hunt(query=query, bird_id=is_leader_bird['id'], task_level=is_leader_bird['task_level'])
+                    self.is_leader_bird(query=query)
 
                 for (query, name) in accounts:
                     self.print_timestamp(
