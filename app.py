@@ -1037,14 +1037,14 @@ class Seed:
                     self.claim_seed(query=query, name=name)
                     worms = self.worms(query=query, name=name)
                     if worms is None: continue
-                    if datetime.now().astimezone() >= datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone():
+                    if datetime.now().astimezone() >= datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone():
                         self.catch_worms(query=query, name=name)
                     else:
-                        restart_times.append(datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().timestamp())
+                        restart_times.append(datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone().timestamp())
                         self.print_timestamp(
                             f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
                             f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                            f"{Fore.YELLOW + Style.BRIGHT}[ Worms Can Be Catch At {datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}"
+                            f"{Fore.YELLOW + Style.BRIGHT}[ Worms Can Be Catch At {datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}"
                         )
                     me_egg = self.me_egg(query=query, name=name)
                     if me_egg is None: continue
