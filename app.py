@@ -466,19 +466,21 @@ class Seed:
         try:
             response = self.session.get(url=url, headers=headers)
             response.raise_for_status()
-            return self.catch_worms(query=query, name=name)
+            return response.json()['data']
         except (JSONDecodeError, RequestException) as e:
-            return self.print_timestamp(
+            self.print_timestamp(
                 f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
                 f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
                 f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Worms: {str(e)} ]{Style.RESET_ALL}"
             )
+            return None
         except Exception as e:
-            return self.print_timestamp(
+            self.print_timestamp(
                 f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
                 f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
                 f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Fetching Worms: {str(e)} ]{Style.RESET_ALL}"
             )
+            return None
 
     def catch_worms(self, query: str, name: str):
         url = 'https://elb.seeddao.org/api/v1/worms/catch'
@@ -1024,6 +1026,7 @@ class Seed:
                     return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ No Session Files Found In The Folder! Please Make Sure There Are '*.session' Files In The Folder. ]{Style.RESET_ALL}")
                 accounts = await self.generate_queries(sessions)
                 total_balance = 0
+                restart_times = []
 
                 self.print_timestamp(f"{Fore.WHITE + Style.BRIGHT}[ Home ]{Style.RESET_ALL}")
                 for (query, name) in accounts:
@@ -1032,8 +1035,19 @@ class Seed:
                     self.login_bonuses(query=query, name=name)
                     self.get_streak_reward(query=query, name=name)
                     self.claim_seed(query=query, name=name)
-                    self.worms(query=query, name=name)
+                    worms = self.worms(query=query, name=name)
+                    if worms is None: continue
+                    if datetime.now().astimezone() >= datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone():
+                        self.catch_worms(query=query, name=name)
+                    else:
+                        restart_times.append(datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().timestamp())
+                        self.print_timestamp(
+                            f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
+                            f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
+                            f"{Fore.YELLOW + Style.BRIGHT}[ Worms Can Be Catch At {datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}"
+                        )
                     me_egg = self.me_egg(query=query, name=name)
+                    if me_egg is None: continue
                     if not me_egg['items']:
                         self.print_timestamp(
                             f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
@@ -1079,15 +1093,24 @@ class Seed:
                 for (query, name) in accounts:
                     balance_profile = self.balance_profile(query=query, name=name)
                     total_balance += int(float(balance_profile / 1000000000)) if balance_profile else 0
-                
+
+                if restart_times:
+                    wait_times = [catch_worms - datetime.now().astimezone().timestamp() for catch_worms in restart_times if catch_worms > datetime.now().astimezone().timestamp()]
+                    if wait_times:
+                        sleep_time = min(wait_times)
+                    else:
+                        sleep_time = 15 * 60
+                else:
+                    sleep_time = 15 * 60
+
                 self.print_timestamp(
                     f"{Fore.CYAN + Style.BRIGHT}[ Total Account {len(accounts)} ]{Style.RESET_ALL}"
                     f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
                     f"{Fore.GREEN + Style.BRIGHT}[ Total Balance {total_balance} ]{Style.RESET_ALL}"
                 )
-                self.print_timestamp(f"{Fore.CYAN + Style.BRIGHT}[ Restarting At {(datetime.now().astimezone() + timedelta(seconds=1800)).strftime('%x %X %Z')} ]{Style.RESET_ALL}")
+                self.print_timestamp(f"{Fore.CYAN + Style.BRIGHT}[ Restarting At {(datetime.now().astimezone() + timedelta(seconds=sleep_time)).strftime('%x %X %Z')} ]{Style.RESET_ALL}")
 
-                await asyncio.sleep(1800)
+                await asyncio.sleep(sleep_time)
                 self.clear_terminal()
             except Exception as e:
                 self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {str(e)} ]{Style.RESET_ALL}")
