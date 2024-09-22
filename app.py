@@ -198,10 +198,10 @@ class Seed:
             with Session().get(url=url, headers=headers) as response:
                 response.raise_for_status()
                 me_worms = response.json()['data']
-                if me_worms['items']:
-                    for data in me_worms['items']:
-                        if data['status'] == 'successful' and data['type'] == 'legendary' and not data['on_market']:
-                            await self.add_market_item(query=query, worm_id=data['id'])
+                if not me_worms['items']: return
+                for data in me_worms['items']:
+                    if data['status'] == 'successful' and data['type'] == 'legendary' and not data['on_market']:
+                        await self.add_market_item(query=query, worm_id=data['id'])
         except (JSONDecodeError, RequestException) as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Me Worms: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -241,9 +241,9 @@ class Seed:
             with Session().get(url=url, headers=headers) as response:
                 response.raise_for_status()
                 me_egg = response.json()['data']
-                if me_egg['items']:
-                    for egg in me_egg['items']:
-                        await self.complete_egg_hatch(query=query, egg_id=egg['id'])
+                if not me_egg['items']: return
+                for egg in me_egg['items']:
+                    await self.complete_egg_hatch(query=query, egg_id=egg['id'])
         except (JSONDecodeError, RequestException) as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Me Egg: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -304,10 +304,10 @@ class Seed:
             with Session().get(url=url, headers=headers) as response:
                 response.raise_for_status()
                 streak_reward = response.json()['data']
-                if streak_reward:
-                    for data in streak_reward:
-                        if data['status'] == 'created':
-                            await self.streak_reward(query=query, streak_reward_ids=data['id'])
+                if not streak_reward: return
+                for data in streak_reward:
+                    if data['status'] == 'created':
+                        await self.streak_reward(query=query, streak_reward_ids=data['id'])
         except (JSONDecodeError, RequestException) as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Streak Reward: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
