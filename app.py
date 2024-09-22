@@ -444,11 +444,11 @@ class Seed:
             with Session().get(url=url, headers=headers) as response:
                 response.raise_for_status()
                 me_all_worms = response.json()['data']
-                if me_all_worms:
-                    for data in me_all_worms:
-                        if data['status'] == 'successful':
-                            await self.bird_feed(query=query, bird_id=bird_id, worm_ids=data['id'])
-                    return await self.start_bird_hunt(query=query, bird_id=bird_id, task_level=task_level)
+                if not me_all_worms: return
+                for data in me_all_worms:
+                    if data['status'] == 'successful':
+                        await self.bird_feed(query=query, bird_id=bird_id, worm_ids=data['id'])
+                return await self.start_bird_hunt(query=query, bird_id=bird_id, task_level=task_level)
         except (JSONDecodeError, RequestException) as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Me All Worms: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
