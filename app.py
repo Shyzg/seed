@@ -696,7 +696,7 @@ class Seed:
                     await self.claim_seed(query=query)
                     worms = await self.worms(query=query)
                     if worms is None: continue
-                    if datetime.now().astimezone() >= datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone():
+                    if datetime.now().astimezone() >= datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone():
                         if not worms['is_caught']:
                             await self.catch_worms(query=query)
                             restart_times.append(datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().timestamp())
@@ -705,8 +705,8 @@ class Seed:
                             restart_times.append(datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().timestamp())
                             self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
                     else:
-                        restart_times.append(datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().timestamp())
-                        self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
+                        restart_times.append(datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone().timestamp())
+                        self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
                     await self.me_worms(query=query)
                     await self.me_egg(query=query)
 
