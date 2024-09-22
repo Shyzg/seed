@@ -61,8 +61,9 @@ class Seed:
                     await client.connect()
                     me = await client.get_me()
                     username = me.username if me.username else self.faker.user_name()
+                    last_name = me.last_name if me.last_name else self.faker.last_name()
                     if not '🌱SEED' in me.last_name:
-                        await client(account.UpdateProfileRequest(last_name=f"{me.last_name}🌱SEED"))
+                        await client(account.UpdateProfileRequest(last_name=f"{last_name}🌱SEED"))
                 except (AuthKeyUnregisteredError, UnauthorizedError, UserDeactivatedBanError, UserDeactivatedError) as e:
                     raise e
 
