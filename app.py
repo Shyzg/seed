@@ -557,13 +557,14 @@ class Seed:
                 progresses_tasks = response.json()['data']
                 for task in progresses_tasks:
                     if task['task_user'] is None or not task['task_user']['completed']:
-                        await self.tasks(query=query, task_id=task['id'], task_name=task['name'])
+                        self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ {task['name']} Isn\'t Complete ]{Style.RESET_ALL}")
+                        await self.tasks(query=query, task_id=task['id'])
         except (JSONDecodeError, RequestException) as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Progresses Tasks: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Fetching Progresses Tasks: {str(e)} ]{Style.RESET_ALL}")
 
-    async def tasks(self, query: str, task_id: str, task_name: str):
+    async def tasks(self, query: str, task_id: str):
         url = f'https://elb.seeddao.org/api/v1/tasks/{task_id}'
         headers = {
             **self.headers,
@@ -573,38 +574,9 @@ class Seed:
         try:
             with Session().post(url=url, headers=headers) as response:
                 response.raise_for_status()
-                tasks = response.json()
-                await asyncio.sleep(random.randint(3, 5))
-                return await self.notification_tasks(query=query, data=tasks['data'], task_name=task_name)
-        except (JSONDecodeError, RequestException) as e:
-            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Start Task {task_name}: {str(e)} ]{Style.RESET_ALL}")
-        except Exception as e:
-            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Start Task {task_name}: {str(e)} ]{Style.RESET_ALL}")
-
-    async def notification_tasks(self, query: str, data: str, task_name: str):
-        url = f'https://elb.seeddao.org/api/v1/tasks/notification/{data}'
-        headers = {
-            **self.headers,
-            'telegram-data': query
-        }
-        try:
-            with Session().get(url=url, headers=headers) as response:
-                response.raise_for_status()
-                notification_tasks = response.json()
-                if 'data' in notification_tasks['data']:
-                    if notification_tasks['data']['data']['completed']:
-                        return self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ You Have Got {notification_tasks['data']['data']['reward_amount'] / 1000000000} From Completing {task_name} ]{Style.RESET_ALL}")
-                elif 'error' in notification_tasks['data']:
-                    if notification_tasks['data']['error'] == 'incomplete task':
-                        return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {task_name} Incomeplete ]{Style.RESET_ALL}")
-        except (JSONDecodeError, RequestException) as e:
-            if e.response.status_code == 404:
-                error_notification_tasks = e.response.json()
-                if error_notification_tasks['message'] == 'notification not found or expired':
-                    return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {task_name} Not Found Or Expired ]{Style.RESET_ALL}")
-            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Notification Task {task_name}: {str(e)} ]{Style.RESET_ALL}")
-        except Exception as e:
-            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Notification Task {task_name}: {str(e)} ]{Style.RESET_ALL}")
+                return True
+        except (Exception, JSONDecodeError, RequestException):
+            return False
 
     async def detail_member_guild(self, query: str):
         url = 'https://elb.seeddao.org/api/v1/guild/member/detail'
@@ -654,7 +626,7 @@ class Seed:
             with Session().post(url=url, headers=headers, data=data) as response:
                 response.raise_for_status()
                 return await self.join_guild(query=query, guild_id='b4480be6-0f4a-42d2-8f58-bc087daa33c3')
-        except (Exception, JSONDecodeError, RequestException) as e:
+        except (Exception, JSONDecodeError, RequestException):
             return False
 
     async def perform_is_leader(self, query, name):
