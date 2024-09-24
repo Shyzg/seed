@@ -3,6 +3,5 @@ __pycache__
 development
 venv
 .DS_Store
-*.json
 !tokens.json
 !queries.txt
