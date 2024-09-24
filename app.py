@@ -40,7 +40,6 @@ class Seed:
         }
         self.api_id = 26326768
         self.api_hash = 'ff06b969a60cdb700f6e965de8e34e68'
-        self.sell_price = 100
 
     def clear_terminal(self):
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -187,7 +186,7 @@ class Seed:
         except Exception as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Upgrade Storage Size: {str(e)} ]{Style.RESET_ALL}")
 
-    async def me_worms(self, query: str):
+    async def me_worms(self, query: str, sell_price_legendary: int, sell_price_epic: int, sell_price_rare: int):
         url = 'https://elb.seeddao.org/api/v1/worms/me?page=1'
         headers = {
             **self.headers,
@@ -197,18 +196,31 @@ class Seed:
             with Session().get(url=url, headers=headers) as response:
                 response.raise_for_status()
                 me_worms = response.json()['data']
-                if not me_worms['items']: return
-                for data in me_worms['items']:
-                    if data['status'] == 'successful' and data['type'] == 'legendary' and not data['on_market']:
-                        await self.add_market_item(query=query, worm_id=data['id'])
+                if me_worms['items']:
+                    for data in me_worms['items']:
+                        if data['status'] == 'successful':
+                            if not data['on_market']:
+                                if data['type'] == 'legendary':
+                                    await self.add_market_item(query=query, worm_id=data['id'], sell_price=sell_price_legendary)
+                                elif data['type'] == 'epic':
+                                    await self.add_market_item(query=query, worm_id=data['id'], sell_price=sell_price_epic)
+                                elif data['type'] == 'rare':
+                                    await self.add_market_item(query=query, worm_id=data['id'], sell_price=sell_price_rare)
+                            else:
+                                if data['type'] == 'legendary' and data['price'] != int(sell_price_legendary * 1000000000):
+                                    await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=sell_price_rare, market_id=data['market_id'], worm_type=data['type'])
+                                elif data['type'] == 'epic' and data['price'] != int(sell_price_legendary * 1000000000):
+                                    await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=sell_price_rare, market_id=data['market_id'], worm_type=data['type'])
+                                elif data['type'] == 'rare' and data['price'] != int(sell_price_legendary * 1000000000):
+                                    await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=sell_price_rare, market_id=data['market_id'], worm_type=data['type'])
         except (JSONDecodeError, RequestException) as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Me Worms: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Fetching Me Worms: {str(e)} ]{Style.RESET_ALL}")
 
-    async def add_market_item(self, query: str, worm_id: str):
+    async def add_market_item(self, query: str, worm_id: str, sell_price: int):
         url = 'https://elb.seeddao.org/api/v1/market-item/add'
-        data = json.dumps({'worm_id':worm_id,'price':int(self.sell_price * 1000000000)})
+        data = json.dumps({'worm_id':worm_id,'price':sell_price * 1000000000})
         headers = {
             **self.headers,
             'Content-Length': str(len(data)),
@@ -223,8 +235,27 @@ class Seed:
                     return self.print_timestamp(
                         f"{Fore.GREEN + Style.BRIGHT}[ Successfully Add Worm {add_market_item['worm_type']} To Market ]{Style.RESET_ALL}"
                         f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                        f"{Fore.YELLOW + Style.BRIGHT}[ Price Net {int(add_market_item['price_net'] / 1000000000)} ]{Style.RESET_ALL}"
+                        f"{Fore.YELLOW + Style.BRIGHT}[ Price Net {add_market_item['price_net'] / 1000000000} ]{Style.RESET_ALL}"
                     )
+        except (JSONDecodeError, RequestException) as e:
+            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Add Market Item: {str(e)} ]{Style.RESET_ALL}")
+        except Exception as e:
+            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Add Market Item: {str(e)} ]{Style.RESET_ALL}")
+
+    async def cancel_market_item(self, query: str, worm_id: str, sell_price: int, market_id: str, worm_type: str):
+        url = f'https://elb.seeddao.org/api/v1/market-item/{market_id}/cancel'
+        data = json.dumps({'id':market_id})
+        headers = {
+            **self.headers,
+            'Content-Length': str(len(data)),
+            'Content-Type': 'application/json',
+            'telegram-data': query
+        }
+        try:
+            with Session().post(url=url, headers=headers, data=data) as response:
+                response.raise_for_status()
+                self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Updating Price For Worm {worm_type} ]{Style.RESET_ALL}")
+                await self.add_market_item(query=query, worm_id=worm_id, sell_price=sell_price)
         except (JSONDecodeError, RequestException) as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Add Market Item: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -651,6 +682,8 @@ class Seed:
                 sessions = [file.replace('.session', '') for file in os.listdir('sessions/') if file.endswith('.session')]
                 if not sessions:
                     return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ No Session Files Found In The Folder! Please Make Sure There Are '*.session' Files In The Folder. ]{Style.RESET_ALL}")
+                with open('config.json', 'r') as config_file:
+                    config = json.load(config_file)
                 accounts = await self.generate_queries(sessions)
                 total_balance = 0.0
                 restart_times = []
@@ -677,7 +710,7 @@ class Seed:
                         else:
                             restart_times.append(datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone().timestamp())
                             self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
-                    await self.me_worms(query=query)
+                    await self.me_worms(query=query, sell_price_legendary=config['sell_price_legendary'], sell_price_epic=config['sell_price_epic'], sell_price_rare=config['sell_price_rare'])
                     await self.me_egg(query=query)
 
                 tasks = [self.perform_is_leader(query, name) for (query, name) in accounts]
