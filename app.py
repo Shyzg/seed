@@ -476,7 +476,7 @@ class Seed:
                 me_all_worms = response.json()['data']
                 if not me_all_worms: return
                 for data in me_all_worms:
-                    if data['status'] == 'successful':
+                    if data['status'] == 'successful' and (data['type'] == 'common' or data['type'] == 'uncommon'):
                         await self.bird_feed(query=query, bird_id=bird_id, worm_ids=data['id'])
                 return await self.start_bird_hunt(query=query, bird_id=bird_id, task_level=task_level)
         except (JSONDecodeError, RequestException) as e:
