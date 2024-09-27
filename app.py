@@ -24,6 +24,8 @@ import sys
 
 class Seed:
     def __init__(self) -> None:
+        self.api_id = 25657041
+        self.api_hash = 'bcb88f6cbd561eec16e65f4d8ce342da'
         self.faker = Faker()
         self.headers = {
             'Accept': '*/*',
@@ -38,8 +40,6 @@ class Seed:
             'Sec-Fetch-Site': 'same-site',
             'User-Agent': FakeUserAgent().random
         }
-        self.api_id = 26326768
-        self.api_hash = 'ff06b969a60cdb700f6e965de8e34e68'
 
     def clear_terminal(self):
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -72,6 +72,7 @@ class Seed:
                     start_param='6094625904'
                 ))
                 query = unquote(string=webapp_response.url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0])
+
                 await client.disconnect()
                 return (query, username)
         except Exception as e:
