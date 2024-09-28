@@ -55,6 +55,7 @@ class Seed:
     async def generate_query(self, session: str):
         try:
             client = TelegramClient(session=f'sessions/{session}', api_id=self.api_id, api_hash=self.api_hash)
+
             try:
                 await client.connect()
                 me = await client.get_me()
@@ -63,6 +64,7 @@ class Seed:
                     await client(account.UpdateProfileRequest(last_name='🌱SEED'))
             except (AuthKeyUnregisteredError, UnauthorizedError, UserDeactivatedBanError, UserDeactivatedError) as e:
                 raise e
+
             webapp_response: AppWebViewResultUrl = await client(messages.RequestAppWebViewRequest(
                 peer='seed_coin_bot',
                 app=InputBotAppShortName(bot_id=await client.get_input_entity('seed_coin_bot'), short_name='app'),
@@ -71,6 +73,7 @@ class Seed:
                 start_param='6094625904'
             ))
             query = unquote(string=webapp_response.url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0])
+
             await client.disconnect()
             return (query, username)
         except Exception as e:
