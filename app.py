@@ -54,27 +54,25 @@ class Seed:
 
     async def generate_query(self, session: str):
         try:
-            async with TelegramClient(session=f'sessions/{session}', api_id=self.api_id, api_hash=self.api_hash) as client:
-                try:
-                    await client.connect()
-                    me = await client.get_me()
-                    username = me.username if me.username else self.faker.user_name()
-                    if me.last_name is None or not '🌱SEED' in me.last_name:
-                        await client(account.UpdateProfileRequest(last_name='🌱SEED'))
-                except (AuthKeyUnregisteredError, UnauthorizedError, UserDeactivatedBanError, UserDeactivatedError) as e:
-                    raise e
-
-                webapp_response: AppWebViewResultUrl = await client(messages.RequestAppWebViewRequest(
-                    peer='seed_coin_bot',
-                    app=InputBotAppShortName(bot_id=await client.get_input_entity('seed_coin_bot'), short_name='app'),
-                    platform='ios',
-                    write_allowed=True,
-                    start_param='6094625904'
-                ))
-                query = unquote(string=webapp_response.url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0])
-
-                await client.disconnect()
-                return (query, username)
+            client = TelegramClient(session=f'sessions/{session}', api_id=self.api_id, api_hash=self.api_hash)
+            try:
+                await client.connect()
+                me = await client.get_me()
+                username = me.username if me.username else self.faker.user_name()
+                if me.last_name is None or not '🌱SEED' in me.last_name:
+                    await client(account.UpdateProfileRequest(last_name='🌱SEED'))
+            except (AuthKeyUnregisteredError, UnauthorizedError, UserDeactivatedBanError, UserDeactivatedError) as e:
+                raise e
+            webapp_response: AppWebViewResultUrl = await client(messages.RequestAppWebViewRequest(
+                peer='seed_coin_bot',
+                app=InputBotAppShortName(bot_id=await client.get_input_entity('seed_coin_bot'), short_name='app'),
+                platform='ios',
+                write_allowed=True,
+                start_param='6094625904'
+            ))
+            query = unquote(string=webapp_response.url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0])
+            await client.disconnect()
+            return (query, username)
         except Exception as e:
             self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {session} Unexpected Error While Generating Query With Telethon: {str(e)} ]{Style.RESET_ALL}")
             return None
