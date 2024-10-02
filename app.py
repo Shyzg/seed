@@ -24,8 +24,13 @@ import sys
 
 class Seed:
     def __init__(self) -> None:
-        self.api_id = 25657041
-        self.api_hash = 'bcb88f6cbd561eec16e65f4d8ce342da'
+        with open('config.json', 'r') as config_file:
+            config = json.load(config_file)
+        self.api_id = config['api_id']
+        self.api_hash = config['api_hash']
+        self.sell_price_epic=config['sell_price_epic']
+        self.sell_price_rare=config['sell_price_rare']
+        self.sell_price_legendary=config['sell_price_legendary']
         self.faker = Faker()
         self.headers = {
             'Accept': '*/*',
@@ -189,7 +194,7 @@ class Seed:
         except Exception as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Upgrade Storage Size: {str(e)} ]{Style.RESET_ALL}")
 
-    async def me_worms(self, query: str, sell_price_legendary: int, sell_price_epic: int, sell_price_rare: int):
+    async def me_worms(self, query: str):
         url = 'https://elb.seeddao.org/api/v1/worms/me?page=1'
         headers = {
             **self.headers,
@@ -204,18 +209,18 @@ class Seed:
                         if data['status'] == 'successful':
                             if not data['on_market']:
                                 if data['type'] == 'legendary':
-                                    await self.add_market_item(query=query, worm_id=data['id'], sell_price=sell_price_legendary)
+                                    await self.add_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_legendary)
                                 elif data['type'] == 'epic':
-                                    await self.add_market_item(query=query, worm_id=data['id'], sell_price=sell_price_epic)
+                                    await self.add_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_epic)
                                 elif data['type'] == 'rare':
-                                    await self.add_market_item(query=query, worm_id=data['id'], sell_price=sell_price_rare)
+                                    await self.add_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_rare)
                             else:
-                                if data['type'] == 'legendary' and data['price'] != int(sell_price_legendary * 1000000000):
-                                    await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=sell_price_rare, market_id=data['market_id'], worm_type=data['type'])
-                                elif data['type'] == 'epic' and data['price'] != int(sell_price_legendary * 1000000000):
-                                    await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=sell_price_rare, market_id=data['market_id'], worm_type=data['type'])
-                                elif data['type'] == 'rare' and data['price'] != int(sell_price_legendary * 1000000000):
-                                    await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=sell_price_rare, market_id=data['market_id'], worm_type=data['type'])
+                                if data['type'] == 'legendary' and data['price'] != int(self.sell_price_legendary * 1000000000):
+                                    await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_legendary, market_id=data['market_id'], worm_type=data['type'])
+                                elif data['type'] == 'epic' and data['price'] != int(self.sell_price_epic * 1000000000):
+                                    await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_epic, market_id=data['market_id'], worm_type=data['type'])
+                                elif data['type'] == 'rare' and data['price'] != int(self.sell_price_rare * 1000000000):
+                                    await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_rare, market_id=data['market_id'], worm_type=data['type'])
         except (JSONDecodeError, RequestException) as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Me Worms: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -713,7 +718,7 @@ class Seed:
                         else:
                             restart_times.append(datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone().timestamp())
                             self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
-                    await self.me_worms(query=query, sell_price_legendary=config['sell_price_legendary'], sell_price_epic=config['sell_price_epic'], sell_price_rare=config['sell_price_rare'])
+                    await self.me_worms(query=query)
                     await self.me_egg(query=query)
 
                 tasks = [self.perform_is_leader(query, name) for (query, name) in accounts]

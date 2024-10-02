@@ -3,5 +3,6 @@ __pycache__
 development
 venv
 .DS_Store
-!tokens.json
-!queries.txt
+*.session
+*.json
+!config.json
