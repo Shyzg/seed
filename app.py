@@ -220,11 +220,11 @@ class Seed:
                                     elif data['type'] == 'rare':
                                         await self.add_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_rare)
                                 else:
-                                    if data['type'] == 'legendary' and data['price'] != int(self.sell_price_legendary * 1000000000):
+                                    if data['type'] == 'legendary' and data['price'] != self.sell_price_legendary:
                                         await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_legendary, market_id=data['market_id'], worm_type=data['type'])
-                                    elif data['type'] == 'epic' and data['price'] != int(self.sell_price_epic * 1000000000):
+                                    elif data['type'] == 'epic' and data['price'] != self.sell_price_epic:
                                         await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_epic, market_id=data['market_id'], worm_type=data['type'])
-                                    elif data['type'] == 'rare' and data['price'] != int(self.sell_price_rare * 1000000000):
+                                    elif data['type'] == 'rare' and data['price'] != self.sell_price_rare:
                                         await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_rare, market_id=data['market_id'], worm_type=data['type'])
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Me Worms: {str(e)} ]{Style.RESET_ALL}")
