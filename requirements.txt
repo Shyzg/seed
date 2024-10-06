@@ -1,5 +1,5 @@
+aiohttp==3.10.9
 colorama==0.4.6
 fake-useragent==1.5.1
 Faker==27.0.0
 Telethon==1.36.0
-requests==2.32.3
