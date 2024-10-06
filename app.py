@@ -691,23 +691,6 @@ class Seed:
         except (Exception, ClientResponseError):
             return False
 
-    async def perform_is_leader(self, query, name):
-        self.print_timestamp(
-            f"{Fore.WHITE + Style.BRIGHT}[ Home/Is Leader ]{Style.RESET_ALL}"
-            f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-            f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
-        )
-        await self.is_leader_bird(query=query)
-
-    async def perform_boost(self, query, name):
-        self.print_timestamp(
-            f"{Fore.WHITE + Style.BRIGHT}[ Boost ]{Style.RESET_ALL}"
-            f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-            f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
-        )
-        await self.upgrade_mining_seed(query=query)
-        await self.upgrade_storage_size(query=query)
-
     async def main(self):
         while True:
             try:
@@ -743,8 +726,13 @@ class Seed:
                     await self.me_worms(query=query)
                     await self.me_egg(query=query)
 
-                tasks = [self.perform_is_leader(query, name) for (query, name) in accounts]
-                await asyncio.gather(*tasks)
+                for (query, name) in accounts:
+                    self.print_timestamp(
+                        f"{Fore.WHITE + Style.BRIGHT}[ Home/Is Leader ]{Style.RESET_ALL}"
+                        f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
+                        f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
+                    )
+                    await self.is_leader_bird(query=query)
 
                 for (query, name) in accounts:
                     self.print_timestamp(
@@ -756,8 +744,14 @@ class Seed:
                     await self.get_streak_reward(query=query)
                     await self.progresses_tasks(query=query)
 
-                tasks = [self.perform_boost(query, name) for (query, name) in accounts]
-                await asyncio.gather(*tasks)
+                for (query, name) in accounts:
+                    self.print_timestamp(
+                        f"{Fore.WHITE + Style.BRIGHT}[ Boost ]{Style.RESET_ALL}"
+                        f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
+                        f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
+                    )
+                    await self.upgrade_mining_seed(query=query)
+                    await self.upgrade_storage_size(query=query)
 
                 for (query, name) in accounts:
                     await self.detail_member_guild(query=query)
