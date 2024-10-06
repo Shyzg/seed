@@ -112,8 +112,8 @@ class Seed:
             async with ClientSession(timeout=ClientTimeout(total=20)) as session:
                 async with session.get(url=url, headers=headers) as response:
                     response.raise_for_status()
-                    profile2 = await response.json()['data']
-                    if not profile2['give_first_egg']:
+                    profile2 = await response.json()
+                    if not profile2['data']['give_first_egg']:
                         return await self.give_first_egg(query=query)
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Profile: {str(e)} ]{Style.RESET_ALL}")
@@ -133,10 +133,10 @@ class Seed:
                     if response.status == 400:
                         return self.print_timestamp(f"{Fore.MAGENTA + Style.BRIGHT}[ Already Received Give First Egg ]{Style.RESET_ALL}")
                     response.raise_for_status()
-                    give_first_egg = await response.json()['data']
-                    if give_first_egg['status'] == 'in-inventory':
-                        self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Got {give_first_egg['type']} From Give First Egg ]{Style.RESET_ALL}")
-                        return await self.complete_egg_hatch(query=query, egg_id=give_first_egg['id'])
+                    give_first_egg = await response.json()
+                    if give_first_egg['data']['status'] == 'in-inventory':
+                        self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Got {give_first_egg['data']['type']} From Give First Egg ]{Style.RESET_ALL}")
+                        return await self.complete_egg_hatch(query=query, egg_id=give_first_egg['data']['id'])
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Give First Egg: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -152,7 +152,7 @@ class Seed:
             async with ClientSession(timeout=ClientTimeout(total=20)) as session:
                 async with session.get(url=url, headers=headers) as response:
                     response.raise_for_status()
-                    return await response.json()['data']
+                    return await response.json()
         except ClientResponseError as e:
             self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Profile Balance: {str(e)} ]{Style.RESET_ALL}")
             return None
@@ -208,9 +208,9 @@ class Seed:
             async with ClientSession(timeout=ClientTimeout(total=20)) as session:
                 async with session.get(url=url, headers=headers) as response:
                     response.raise_for_status()
-                    me_worms = await response.json()['data']
-                    if me_worms['items']:
-                        for data in me_worms['items']:
+                    me_worms = await response.json()
+                    if me_worms['data']['items']:
+                        for data in me_worms['data']['items']:
                             if data['status'] == 'successful':
                                 if not data['on_market']:
                                     if data['type'] == 'legendary':
@@ -244,12 +244,12 @@ class Seed:
             async with ClientSession(timeout=ClientTimeout(total=20)) as session:
                 async with session.post(url=url, headers=headers, data=data) as response:
                     response.raise_for_status()
-                    add_market_item = await response.json()['data']
-                    if add_market_item['status'] == 'on-sale':
+                    add_market_item = await response.json()
+                    if add_market_item['data']['status'] == 'on-sale':
                         return self.print_timestamp(
-                            f"{Fore.GREEN + Style.BRIGHT}[ Successfully Add Worm {add_market_item['worm_type']} To Market ]{Style.RESET_ALL}"
+                            f"{Fore.GREEN + Style.BRIGHT}[ Successfully Add Worm {add_market_item['data']['worm_type']} To Market ]{Style.RESET_ALL}"
                             f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                            f"{Fore.YELLOW + Style.BRIGHT}[ Price Net {add_market_item['price_net'] / 1000000000} ]{Style.RESET_ALL}"
+                            f"{Fore.YELLOW + Style.BRIGHT}[ Price Net {add_market_item['data']['price_net'] / 1000000000} ]{Style.RESET_ALL}"
                         )
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Add Market Item: {str(e)} ]{Style.RESET_ALL}")
@@ -286,9 +286,9 @@ class Seed:
             async with ClientSession(timeout=ClientTimeout(total=20)) as session:
                 async with session.get(url=url, headers=headers) as response:
                     response.raise_for_status()
-                    me_egg = await response.json()['data']
-                    if me_egg['items']:
-                        for egg in me_egg['items']:
+                    me_egg = await response.json()
+                    if me_egg['data']['items']:
+                        for egg in me_egg['data']['items']:
                             await self.complete_egg_hatch(query=query, egg_id=egg['id'])
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Me Egg: {str(e)} ]{Style.RESET_ALL}")
@@ -310,9 +310,9 @@ class Seed:
                     if response.status == 404:
                         return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ Egg Not Existed ]{Style.RESET_ALL}")
                     response.raise_for_status()
-                    complete_egg_hatch = await response.json()['data']
-                    if complete_egg_hatch['status'] == 'in-inventory':
-                        return self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Got {complete_egg_hatch['type']} From Egg Hatch ]{Style.RESET_ALL}")
+                    complete_egg_hatch = await response.json()
+                    if complete_egg_hatch['data']['status'] == 'in-inventory':
+                        return self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Got {complete_egg_hatch['data']['type']} From Egg Hatch ]{Style.RESET_ALL}")
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Complete Egg Hatch: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -331,11 +331,11 @@ class Seed:
                     if response.status == 400:
                         return self.print_timestamp(f"{Fore.MAGENTA + Style.BRIGHT}[ You\'ve Already Claim Login Bonuses ]{Style.RESET_ALL}")
                     response.raise_for_status()
-                    login_bonuses = await response.json()['data']
+                    login_bonuses = await response.json()
                     return self.print_timestamp(
-                        f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Got {login_bonuses['amount'] / 1000000000} From Login Bonuses ]{Style.RESET_ALL}"
+                        f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Got {login_bonuses['data']['amount'] / 1000000000} From Login Bonuses ]{Style.RESET_ALL}"
                         f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                        f"{Fore.YELLOW + Style.BRIGHT}[ Day {login_bonuses['no']} ]{Style.RESET_ALL}"
+                        f"{Fore.YELLOW + Style.BRIGHT}[ Day {login_bonuses['data']['no']} ]{Style.RESET_ALL}"
                     )
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Login Bonuses: {str(e)} ]{Style.RESET_ALL}")
@@ -352,9 +352,9 @@ class Seed:
             async with ClientSession(timeout=ClientTimeout(total=20)) as session:
                 async with session.get(url=url, headers=headers) as response:
                     response.raise_for_status()
-                    streak_reward = await response.json()['data']
-                    if streak_reward:
-                        for data in streak_reward:
+                    streak_reward = await response.json()
+                    if streak_reward['data']:
+                        for data in streak_reward['data']:
                             if data['status'] == 'created':
                                 await self.streak_reward(query=query, streak_reward_ids=data['id'])
         except ClientResponseError as e:
@@ -377,8 +377,8 @@ class Seed:
                     if response.status == 404:
                         return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ Streak Reward Not Existed ]{Style.RESET_ALL}")
                     response.raise_for_status()
-                    streak_reward = await response.json()['data']
-                    for data in streak_reward:
+                    streak_reward = await response.json()
+                    for data in streak_reward['data']:
                         if data['status'] == 'received':
                             self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Claimed Streak Reward ]{Style.RESET_ALL}")
         except ClientResponseError as e:
@@ -396,7 +396,7 @@ class Seed:
             async with ClientSession(timeout=ClientTimeout(total=20)) as session:
                 async with session.get(url=url, headers=headers) as response:
                     response.raise_for_status()
-                    return await response.json()['data']
+                    return await response.json()
         except ClientResponseError as e:
             self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Worms: {str(e)} ]{Style.RESET_ALL}")
             return None
@@ -425,15 +425,15 @@ class Seed:
                         elif error_catch_worms['message'] == 'worm not found':
                             return self.print_timestamp(f"{Fore.MAGENTA + Style.BRIGHT}[ Worm Not Found ]{Style.RESET_ALL}")
                     response.raise_for_status()
-                    catch_worms = await response.json()['data']
-                    if catch_worms['status'] == 'successful':
+                    catch_worms = await response.json()
+                    if catch_worms['data']['status'] == 'successful':
                         return self.print_timestamp(
-                            f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Got {catch_worms['type']} From Catch Worms ]{Style.RESET_ALL}"
+                            f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Got {catch_worms['data']['type']} From Catch Worms ]{Style.RESET_ALL}"
                             f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                            f"{Fore.BLUE + Style.BRIGHT}[ Reward {catch_worms['reward'] / 1000000000} ]{Style.RESET_ALL}"
+                            f"{Fore.BLUE + Style.BRIGHT}[ Reward {catch_worms['data']['reward'] / 1000000000} ]{Style.RESET_ALL}"
                         )
-                    elif catch_worms['status'] == 'failed':
-                        return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ Failed To Catch {catch_worms['type']} Worms ]{Style.RESET_ALL}")
+                    elif catch_worms['data']['status'] == 'failed':
+                        return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ Failed To Catch {catch_worms['data']['type']} Worms ]{Style.RESET_ALL}")
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Catch Worms: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -452,8 +452,8 @@ class Seed:
                     if response.status == 400:
                         return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ Claim Seed Too Early ]{Style.RESET_ALL}")
                     response.raise_for_status()
-                    claim_seed = await response.json()['data']
-                    return self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Got {claim_seed['amount'] / 1000000000} From Seeding ]{Style.RESET_ALL}")
+                    claim_seed = await response.json()
+                    return self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Got {claim_seed['data']['amount'] / 1000000000} From Seeding ]{Style.RESET_ALL}")
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Claim Seed: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -469,18 +469,18 @@ class Seed:
             async with ClientSession(timeout=ClientTimeout(total=20)) as session:
                 async with session.get(url=url, headers=headers) as response:
                     response.raise_for_status()
-                    is_leader_bird = await response.json()['data']
-                    if is_leader_bird['status'] == 'hunting':
-                        if datetime.now().astimezone() >= datetime.fromisoformat(is_leader_bird['hunt_end_at'].replace('Z', '+00:00')).astimezone():
-                            await self.complete_bird_hunt(query=query, bird_id=is_leader_bird['id'], task_level=is_leader_bird['task_level'])
+                    is_leader_bird = await response.json()
+                    if is_leader_bird['data']['status'] == 'hunting':
+                        if datetime.now().astimezone() >= datetime.fromisoformat(is_leader_bird['data']['hunt_end_at'].replace('Z', '+00:00')).astimezone():
+                            await self.complete_bird_hunt(query=query, bird_id=is_leader_bird['data']['id'], task_level=is_leader_bird['data']['task_level'])
                         else:
-                            self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Bird Hunt Can Be Complete At {datetime.fromisoformat(is_leader_bird['hunt_end_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
-                    elif is_leader_bird['status'] == 'in-inventory':
-                        if is_leader_bird['happiness_level'] < 10000 or is_leader_bird['energy_level'] < is_leader_bird['energy_max']:
-                            await self.bird_happiness(query=query, bird_id=is_leader_bird['id'])
-                            await self.me_all_worms(query=query, bird_id=is_leader_bird['id'], task_level=is_leader_bird['task_level'])
-                        elif is_leader_bird['happiness_level'] >= 10000 and is_leader_bird['energy_level'] >= is_leader_bird['energy_max']:
-                            await self.start_bird_hunt(query=query, bird_id=is_leader_bird['id'], task_level=is_leader_bird['task_level'])
+                            self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Bird Hunt Can Be Complete At {datetime.fromisoformat(is_leader_bird['data']['hunt_end_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
+                    elif is_leader_bird['data']['status'] == 'in-inventory':
+                        if is_leader_bird['data']['happiness_level'] < 10000 or is_leader_bird['data']['energy_level'] < is_leader_bird['energy_max']:
+                            await self.bird_happiness(query=query, bird_id=is_leader_bird['data']['id'])
+                            await self.me_all_worms(query=query, bird_id=is_leader_bird['data']['id'], task_level=is_leader_bird['data']['task_level'])
+                        elif is_leader_bird['data']['happiness_level'] >= 10000 and is_leader_bird['data']['energy_level'] >= is_leader_bird['data']['energy_max']:
+                            await self.start_bird_hunt(query=query, bird_id=is_leader_bird['data']['id'], task_level=is_leader_bird['data']['task_level'])
         except ClientResponseError as e:
             self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Is Leader Bird: {str(e)} ]{Style.RESET_ALL}")
             return None
@@ -498,9 +498,9 @@ class Seed:
             async with ClientSession(timeout=ClientTimeout(total=20)) as session:
                 async with session.get(url=url, headers=headers) as response:
                     response.raise_for_status()
-                    me_all_worms = await response.json()['data']
-                    if me_all_worms:
-                        for data in me_all_worms:
+                    me_all_worms = await response.json()
+                    if me_all_worms['data']:
+                        for data in me_all_worms['data']:
                             if data['status'] == 'successful' and (data['type'] == 'common' or data['type'] == 'uncommon'):
                                 await self.bird_feed(query=query, bird_id=bird_id, worm_ids=data['id'])
                         return await self.start_bird_hunt(query=query, bird_id=bird_id, task_level=task_level)
@@ -522,8 +522,8 @@ class Seed:
             async with ClientSession(timeout=ClientTimeout(total=20)) as session:
                 async with session.post(url=url, headers=headers, data=data) as response:
                     response.raise_for_status()
-                    bird_happiness = await response.json()['data']
-                    if bird_happiness['happiness_level'] >= 10000:
+                    bird_happiness = await response.json()
+                    if bird_happiness['data']['happiness_level'] >= 10000:
                         return self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ Your Bird Is Happy ]{Style.RESET_ALL}")
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Bird Happiness: {str(e)} ]{Style.RESET_ALL}")
@@ -568,12 +568,12 @@ class Seed:
                     if response.status == 400:
                         return self.print_timestamp(f"{Fore.MAGENTA + Style.BRIGHT}[ Start Hunting Time Is Not Over Yet ]{Style.RESET_ALL}")
                     response.raise_for_status()
-                    start_bird_hunt = await response.json()['data']
-                    if start_bird_hunt['status'] == 'hunting':
+                    start_bird_hunt = await response.json()
+                    if start_bird_hunt['data']['status'] == 'hunting':
                         self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ Your Bird Is Hunting ]{Style.RESET_ALL}")
-                        if datetime.now().astimezone() >= datetime.fromisoformat(start_bird_hunt['hunt_end_at'].replace('Z', '+00:00')).astimezone():
-                            return await self.complete_bird_hunt(query=query, bird_id=start_bird_hunt['id'], task_level=start_bird_hunt['task_level'])
-                        return self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Bird Hunt Can Be Complete At {datetime.fromisoformat(start_bird_hunt['hunt_end_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
+                        if datetime.now().astimezone() >= datetime.fromisoformat(start_bird_hunt['data']['hunt_end_at'].replace('Z', '+00:00')).astimezone():
+                            return await self.complete_bird_hunt(query=query, bird_id=start_bird_hunt['data']['id'], task_level=start_bird_hunt['data']['task_level'])
+                        return self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Bird Hunt Can Be Complete At {datetime.fromisoformat(start_bird_hunt['data']['hunt_end_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Start Bird Hunt: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -594,8 +594,8 @@ class Seed:
                     if response.status == 400:
                         return self.print_timestamp(f"{Fore.MAGENTA + Style.BRIGHT}[ Complete Hunting Time Is Not Over Yet ]{Style.RESET_ALL}")
                     response.raise_for_status()
-                    complete_bird_hunt = await response.json()['data']
-                    self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Got {complete_bird_hunt['seed_amount'] / 1000000000} From Bird Hunt ]{Style.RESET_ALL}")
+                    complete_bird_hunt = await response.json()
+                    self.print_timestamp(f"{Fore.GREEN + Style.BRIGHT}[ You\'ve Got {complete_bird_hunt['data']['seed_amount'] / 1000000000} From Bird Hunt ]{Style.RESET_ALL}")
                     return await self.is_leader_bird(query=query)
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Complete Bird Hunt: {str(e)} ]{Style.RESET_ALL}")
@@ -612,8 +612,8 @@ class Seed:
             async with ClientSession(timeout=ClientTimeout(total=20)) as session:
                 async with session.get(url=url, headers=headers) as response:
                     response.raise_for_status()
-                    progresses_tasks = await response.json()['data']
-                    for task in progresses_tasks:
+                    progresses_tasks = await response.json()
+                    for task in progresses_tasks['data']:
                         if task['task_user'] is None or not task['task_user']['completed']:
                             self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ {task['name']} Isn\'t Complete ]{Style.RESET_ALL}")
                             await self.tasks(query=query, task_id=task['id'])
@@ -729,17 +729,17 @@ class Seed:
                     await self.claim_seed(query=query)
                     worms = await self.worms(query=query)
                     if worms is not None:
-                        if datetime.now().astimezone() >= datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone():
-                            if not worms['is_caught']:
+                        if datetime.now().astimezone() >= datetime.fromisoformat(worms['data']['created_at'].replace('Z', '+00:00')).astimezone():
+                            if not worms['data']['is_caught']:
                                 await self.catch_worms(query=query)
-                                restart_times.append(datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().timestamp())
-                                self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
+                                restart_times.append(datetime.fromisoformat(worms['data']['next_worm'].replace('Z', '+00:00')).astimezone().timestamp())
+                                self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['data']['next_worm'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
                             else:
-                                restart_times.append(datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().timestamp())
-                                self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['next_worm'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
+                                restart_times.append(datetime.fromisoformat(worms['data']['next_worm'].replace('Z', '+00:00')).astimezone().timestamp())
+                                self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['data']['next_worm'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
                         else:
-                            restart_times.append(datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone().timestamp())
-                            self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['created_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
+                            restart_times.append(datetime.fromisoformat(worms['data']['created_at'].replace('Z', '+00:00')).astimezone().timestamp())
+                            self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Next Worms Can Be Catch At {datetime.fromisoformat(worms['data']['created_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
                     await self.me_worms(query=query)
                     await self.me_egg(query=query)
 
@@ -762,7 +762,7 @@ class Seed:
                 for (query, name) in accounts:
                     await self.detail_member_guild(query=query)
                     balance_profile = await self.balance_profile(query=query)
-                    total_balance += float(balance_profile / 1000000000) if balance_profile else 0.0
+                    total_balance += float(balance_profile['data'] / 1000000000) if balance_profile else 0.0
 
                 if restart_times:
                     wait_times = [catch_worms - datetime.now().astimezone().timestamp() for catch_worms in restart_times if catch_worms > datetime.now().astimezone().timestamp()]
