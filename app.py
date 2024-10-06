@@ -476,7 +476,7 @@ class Seed:
                         else:
                             self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Bird Hunt Can Be Complete At {datetime.fromisoformat(is_leader_bird['data']['hunt_end_at'].replace('Z', '+00:00')).astimezone().strftime('%x %X %Z')} ]{Style.RESET_ALL}")
                     elif is_leader_bird['data']['status'] == 'in-inventory':
-                        if is_leader_bird['data']['happiness_level'] < 10000 or is_leader_bird['data']['energy_level'] < is_leader_bird['energy_max']:
+                        if is_leader_bird['data']['happiness_level'] < 10000 or is_leader_bird['data']['energy_level'] < is_leader_bird['data']['energy_max']:
                             await self.bird_happiness(query=query, bird_id=is_leader_bird['data']['id'])
                             await self.me_all_worms(query=query, bird_id=is_leader_bird['data']['id'], task_level=is_leader_bird['data']['task_level'])
                         elif is_leader_bird['data']['happiness_level'] >= 10000 and is_leader_bird['data']['energy_level'] >= is_leader_bird['data']['energy_max']:
