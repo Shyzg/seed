@@ -25,9 +25,9 @@ class Seed:
             config = json.load(config_file)
         self.api_id = int(config['api_id'])
         self.api_hash = config['api_hash']
-        self.sell_price_epic=config['sell_price_epic']
-        self.sell_price_rare=config['sell_price_rare']
-        self.sell_price_legendary=config['sell_price_legendary']
+        self.sell_price_epic=int(config['sell_price_epic'] * 1000000000)
+        self.sell_price_rare=int(config['sell_price_rare'] * 1000000000)
+        self.sell_price_legendary=int(config['sell_price_legendary'] * 1000000000)
         self.faker = Faker()
         self.headers = {
             'Accept': '*/*',
