@@ -21,8 +21,7 @@ import asyncio, json, os, sys
 
 class Seed:
     def __init__(self) -> None:
-        with open('config.json', 'r') as config_file:
-            config = json.load(config_file)
+        config = json.load(open('config.json', 'r'))
         self.api_id = int(config['api_id'])
         self.api_hash = config['api_hash']
         self.sell_price_epic=config['sell_price_epic']
