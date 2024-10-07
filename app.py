@@ -25,9 +25,9 @@ class Seed:
             config = json.load(config_file)
         self.api_id = int(config['api_id'])
         self.api_hash = config['api_hash']
-        self.sell_price_epic=int(config['sell_price_epic'] * 1000000000)
-        self.sell_price_rare=int(config['sell_price_rare'] * 1000000000)
-        self.sell_price_legendary=int(config['sell_price_legendary'] * 1000000000)
+        self.sell_price_epic=config['sell_price_epic']
+        self.sell_price_rare=config['sell_price_rare']
+        self.sell_price_legendary=config['sell_price_legendary']
         self.faker = Faker()
         self.headers = {
             'Accept': '*/*',
@@ -220,11 +220,11 @@ class Seed:
                                     elif data['type'] == 'rare':
                                         await self.add_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_rare)
                                 else:
-                                    if data['type'] == 'legendary' and data['price'] != self.sell_price_legendary:
+                                    if data['type'] == 'legendary' and data['price'] != int(self.sell_price_legendary * 1000000000):
                                         await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_legendary, market_id=data['market_id'], worm_type=data['type'])
-                                    elif data['type'] == 'epic' and data['price'] != self.sell_price_epic:
+                                    elif data['type'] == 'epic' and data['price'] != int(self.sell_price_epic * 1000000000):
                                         await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_epic, market_id=data['market_id'], worm_type=data['type'])
-                                    elif data['type'] == 'rare' and data['price'] != self.sell_price_rare:
+                                    elif data['type'] == 'rare' and data['price'] != int(self.sell_price_rare * 1000000000):
                                         await self.cancel_market_item(query=query, worm_id=data['id'], sell_price=self.sell_price_rare, market_id=data['market_id'], worm_type=data['type'])
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Me Worms: {str(e)} ]{Style.RESET_ALL}")
