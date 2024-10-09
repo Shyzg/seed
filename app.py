@@ -261,7 +261,7 @@ class Seed:
         except Exception as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Fetching Me Egg: {str(e)} ]{Style.RESET_ALL}")
 
-    async def spin_ticket(self, query: str):
+    async def spin_ticket(self, query: str, id=id):
         url = 'https://elb.seeddao.org/api/v1/spin-ticket'
         headers = {
             **self.headers,
@@ -276,7 +276,7 @@ class Seed:
                         self.print_timestamp(f"{Fore.YELLOW + Style.BRIGHT}[ Ticket {spin['id']} ]{Style.RESET_ALL}")
                         await self.spin_reward(query=query, ticket_id=spin['id'])
                         await asyncio.sleep(2)
-                    await self.egg_piece(query=query)
+                    await self.egg_piece(query=query, id=id)
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Spin Ticket: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -307,7 +307,7 @@ class Seed:
         except Exception as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An Unexpected Error Occurred While Spin Reward: {str(e)} ]{Style.RESET_ALL}")
 
-    async def egg_piece(self, query: str):
+    async def egg_piece(self, query: str, id=id):
         url = 'https://elb.seeddao.org/api/v1/egg-piece'
         headers = {
             **self.headers,
@@ -324,7 +324,7 @@ class Seed:
                         if len(batch) == 5:
                             payload = {'egg_piece_ids':batch}
                             await self.egg_piece_merge(query=query, payload=payload)
-                    await self.me_egg(query=query)
+                    await self.me_egg(query=query, id=id)
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Egg Piece: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -891,7 +891,7 @@ class Seed:
                         f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
                         f"{Fore.CYAN + Style.BRIGHT}[ {name} ]{Style.RESET_ALL}"
                     )
-                    await self.spin_ticket(query=query)
+                    await self.spin_ticket(query=query, id=id)
 
                 for (query, name, id) in accounts:
                     await self.detail_member_guild(query=query)
