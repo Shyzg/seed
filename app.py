@@ -61,8 +61,8 @@ class Seed:
             try:
                 await client.connect()
                 me = await client.get_me()
-                username = me.username if me.username is not None else self.faker.user_name()
-                id = int(me.id)
+                first_name = me.first_name if me.first_name is not None else me.username
+                id = me.id
                 if me.last_name is None or not '🌱SEED' in me.last_name:
                     await client(account.UpdateProfileRequest(last_name='🌱SEED'))
             except (AuthKeyUnregisteredError, UnauthorizedError, UserDeactivatedBanError, UserDeactivatedError) as e:
@@ -78,7 +78,7 @@ class Seed:
             query = unquote(string=webapp_response.url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0])
 
             await client.disconnect()
-            return (query, username, id)
+            return (query, first_name, id)
         except Exception as e:
             self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {session} Unexpected Error While Generating Query With Telethon: {str(e)} ]{Style.RESET_ALL}")
             await client.disconnect()
@@ -217,18 +217,18 @@ class Seed:
                                 if worm['status'] == 'successful':
                                     if not worm['on_market']:
                                         if worm['type'] == 'legendary':
-                                            await self.add_market_item(query=query, payload={'worm_id':worm['id'],'price':self.price_legendary_worm * 1000000000}, type=f"Worm {worm['type']}")
+                                            await self.add_market_item(query=query, payload={'worm_id':worm['id'],'price':int(self.price_legendary_worm * 1000000000)}, type=f"Worm {worm['type']}")
                                         elif worm['type'] == 'epic':
-                                            await self.add_market_item(query=query, payload={'worm_id':worm['id'],'price':self.price_epic_worm * 1000000000}, type=f"Worm {worm['type']}")
+                                            await self.add_market_item(query=query, payload={'worm_id':worm['id'],'price':int(self.price_epic_worm * 1000000000)}, type=f"Worm {worm['type']}")
                                         elif worm['type'] == 'rare':
-                                            await self.add_market_item(query=query, payload={'worm_id':worm['id'],'price':self.price_rare_worm * 1000000000}, type=f"Worm {worm['type']}")
+                                            await self.add_market_item(query=query, payload={'worm_id':worm['id'],'price':int(self.price_rare_worm * 1000000000)}, type=f"Worm {worm['type']}")
                                     else:
                                         if worm['type'] == 'legendary' and worm['price'] != int(self.price_legendary_worm * 1000000000):
-                                            await self.cancel_market_item(query=query, payload={'worm_id':worm['id'],'price':self.price_legendary_worm * 1000000000}, market_id=worm['market_id'], type=f"Worm {worm['type']}")
+                                            await self.cancel_market_item(query=query, payload={'worm_id':worm['id'],'price':int(self.price_legendary_worm * 1000000000)}, market_id=worm['market_id'], type=f"Worm {worm['type']}")
                                         elif worm['type'] == 'epic' and worm['price'] != int(self.price_epic_worm * 1000000000):
-                                            await self.cancel_market_item(query=query, payload={'worm_id':worm['id'],'price':self.price_epic_worm * 1000000000}, market_id=worm['market_id'], type=f"Worm {worm['type']}")
+                                            await self.cancel_market_item(query=query, payload={'worm_id':worm['id'],'price':int(self.price_epic_worm * 1000000000)}, market_id=worm['market_id'], type=f"Worm {worm['type']}")
                                         elif worm['type'] == 'rare' and worm['price'] != int(self.price_rare_worm * 1000000000):
-                                            await self.cancel_market_item(query=query, payload={'worm_id':worm['id'],'price':self.price_rare_worm * 1000000000}, market_id=worm['market_id'], type=f"Worm {worm['type']}")
+                                            await self.cancel_market_item(query=query, payload={'worm_id':worm['id'],'price':int(self.price_rare_worm * 1000000000)}, market_id=worm['market_id'], type=f"Worm {worm['type']}")
         except ClientResponseError as e:
             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ An HTTP Error Occurred While Fetching Me Worms: {str(e)} ]{Style.RESET_ALL}")
         except Exception as e:
@@ -250,10 +250,10 @@ class Seed:
                             if id == self.id_telegram_primary_account:
                                 if egg['status'] == 'in-inventory':
                                     if egg['type'] == 'common':
-                                        await self.add_market_item(query=query, payload={'egg_id':egg['id'],'price':self.price_common_egg * 1000000000}, type=f"Egg {egg['type']}")
+                                        await self.add_market_item(query=query, payload={'egg_id':egg['id'],'price':int(self.price_common_egg * 1000000000)}, type=f"Egg {egg['type']}")
                                 elif egg['status'] == 'on-market':
                                     if egg['price'] != int(self.price_common_egg * 1000000000):
-                                        await self.cancel_market_item(query=query, payload={'egg_id':egg['id'],'price':self.price_common_egg * 1000000000}, market_id=egg['market_id'], type=f"Egg {egg['type']}")
+                                        await self.cancel_market_item(query=query, payload={'egg_id':egg['id'],'price':int(self.price_common_egg * 1000000000)}, market_id=egg['market_id'], type=f"Egg {egg['type']}")
                             else:
                                 await self.egg_transfer(query=query, egg_id=egg['id'])
         except ClientResponseError as e:
@@ -858,7 +858,7 @@ class Seed:
                     await self.me_worms(query=query, id=id)
                     await self.me_egg(query=query, id=id)
 
-                for (query, name) in accounts:
+                for (query, name, id) in accounts:
                     self.print_timestamp(
                         f"{Fore.WHITE + Style.BRIGHT}[ Home/Is Leader ]{Style.RESET_ALL}"
                         f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
@@ -866,7 +866,7 @@ class Seed:
                     )
                     await self.is_leader_bird(query=query)
 
-                for (query, name) in accounts:
+                for (query, name, id) in accounts:
                     self.print_timestamp(
                         f"{Fore.WHITE + Style.BRIGHT}[ Earn ]{Style.RESET_ALL}"
                         f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
@@ -876,7 +876,7 @@ class Seed:
                     await self.get_streak_reward(query=query)
                     await self.progresses_tasks(query=query)
 
-                for (query, name) in accounts:
+                for (query, name, id) in accounts:
                     self.print_timestamp(
                         f"{Fore.WHITE + Style.BRIGHT}[ Boost ]{Style.RESET_ALL}"
                         f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
@@ -885,7 +885,7 @@ class Seed:
                     await self.upgrade_mining_seed(query=query)
                     await self.upgrade_storage_size(query=query)
 
-                for (query, name) in accounts:
+                for (query, name, id) in accounts:
                     self.print_timestamp(
                         f"{Fore.WHITE + Style.BRIGHT}[ Spin/Merge Egg/Send Egg ]{Style.RESET_ALL}"
                         f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
@@ -893,7 +893,7 @@ class Seed:
                     )
                     await self.spin_ticket(query=query)
 
-                for (query, name) in accounts:
+                for (query, name, id) in accounts:
                     await self.detail_member_guild(query=query)
                     balance_profile = await self.balance_profile(query=query)
                     total_balance += float(balance_profile['data'] / 1000000000) if balance_profile else 0.0
