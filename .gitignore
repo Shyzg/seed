@@ -3,7 +3,7 @@ __pycache__
 development
 venv
 .DS_Store
-*.session
 *.json
+*.session
 !config.json
 !removethis.example.session
