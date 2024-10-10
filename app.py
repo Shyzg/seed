@@ -346,6 +346,8 @@ class Seed:
                         error_message_egg_piece_merge = await response.json()
                         if error_message_egg_piece_merge['message'] == 'you can only fuse twice a day':
                             return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ You Can Only Fuse Twice A Day ]{Style.RESET_ALL}")
+                        elif error_message_egg_piece_merge['message'] == 'you don\'t have enough seeds':
+                            return self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ You Don\'t Have Enough Seeds ]{Style.RESET_ALL}")
                     response.raise_for_status()
                     egg_piece_merge = await response.json()
                     if egg_piece_merge['data']['status'] == 'in-inventory':
