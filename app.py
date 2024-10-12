@@ -1,3 +1,8 @@
+from aiohttp import (
+    ClientResponseError,
+    ClientSession,
+    ClientTimeout
+)
 from colorama import *
 from datetime import datetime, timedelta
 from fake_useragent import FakeUserAgent
@@ -10,11 +15,9 @@ from telethon.errors import (
 )
 from telethon.functions import messages, account
 from telethon.sync import TelegramClient
-from telethon.types import InputBotAppShortName, AppWebViewResultUrl
-from aiohttp import (
-    ClientResponseError,
-    ClientSession,
-    ClientTimeout
+from telethon.types import (
+    InputBotAppShortName,
+    AppWebViewResultUrl
 )
 from urllib.parse import unquote
 import asyncio, json, os, sys
@@ -80,8 +83,8 @@ class Seed:
             await client.disconnect()
             return (query, first_name, id)
         except Exception as e:
-            self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {session} Unexpected Error While Generating Query With Telethon: {str(e)} ]{Style.RESET_ALL}")
             await client.disconnect()
+            self.print_timestamp(f"{Fore.RED + Style.BRIGHT}[ {session} Unexpected Error While Generating Query With Telethon: {str(e)} ]{Style.RESET_ALL}")
             return None
 
     async def generate_queries(self, sessions):
