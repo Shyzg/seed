@@ -62,14 +62,16 @@ class Seed:
         try:
             client = TelegramClient(session=f'sessions/{session}', api_id=self.api_id, api_hash=self.api_hash)
             try:
-                await client.connect()
-                me = await client.get_me()
-                first_name = me.first_name if me.first_name is not None else me.username
-                id = me.id
-                if me.last_name is None or not '🌱SEED' in me.last_name:
-                    await client(account.UpdateProfileRequest(last_name='🌱SEED'))
+                if not client.is_connected():
+                    await client.connect()
             except (AuthKeyUnregisteredError, UnauthorizedError, UserDeactivatedBanError, UserDeactivatedError) as e:
                 raise e
+
+            me = await client.get_me()
+            first_name = me.first_name if me.first_name is not None else me.username
+            id = me.id
+
+            if me.last_name is None or not '🌱SEED' in me.last_name: await client(account.UpdateProfileRequest(last_name='🌱SEED'))
 
             webapp_response: AppWebViewResultUrl = await client(messages.RequestAppWebViewRequest(
                 peer='seed_coin_bot',
@@ -79,8 +81,10 @@ class Seed:
                 start_param='6094625904'
             ))
             query = unquote(string=webapp_response.url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0])
+            
+            if client.is_connected():
+                await client.disconnect()
 
-            await client.disconnect()
             return (query, first_name, id)
         except Exception as e:
             await client.disconnect()
