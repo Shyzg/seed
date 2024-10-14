@@ -6,7 +6,6 @@ from aiohttp import (
 from colorama import *
 from datetime import datetime, timedelta
 from fake_useragent import FakeUserAgent
-from faker import Faker
 from telethon.errors import (
     AuthKeyUnregisteredError,
     UserDeactivatedError,
@@ -32,7 +31,6 @@ class Seed:
         self.price_legendary_worm=config['price_legendary_worm']
         self.price_epic_worm=config['price_epic_worm']
         self.price_rare_worm=config['price_rare_worm']
-        self.faker = Faker()
         self.headers = {
             'Accept': '*/*',
             'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
