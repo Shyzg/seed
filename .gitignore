@@ -6,4 +6,4 @@ venv
 *.json
 *.session
 !config.json
-!removethis.example.session
+!removethis.example
